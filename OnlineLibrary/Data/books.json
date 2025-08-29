@@ -1,0 +1,112 @@
+[
+  {
+    "Id": 1,
+    "Title": "Book One",
+    "Author": "Author One",
+    "Description": "Book One Description",
+    "ReleaseDate": "2025-09-15",
+    "Genre": "Memoir",
+    "Price": 22.00,
+    "Pages": 220,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 2,
+    "Title": "Book Two",
+    "Author": "Author Two",
+    "Description": "Book Two Description",
+    "ReleaseDate": "2025-07-15",
+    "Genre": "Mystery",
+    "Price": 20.00,
+    "Pages": 250,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 3,
+    "Title": "Book Three",
+    "Author": "Author Three",
+    "Description": "Book Three Description",
+    "ReleaseDate": "2025-09-09",
+    "Genre": "Romance",
+    "Price": 18.00,
+    "Pages": 300,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 4,
+    "Title": "Book Four",
+    "Author": "Author Four",
+    "Description": "Book Four Description",
+    "ReleaseDate": "2025-09-15",
+    "Genre": "TrueCrime",
+    "Price": 22.00,
+    "Pages": 280,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 5,
+    "Title": "Book Five",
+    "Author": "Author Five",
+    "Description": "Book Five Description",
+    "ReleaseDate": "2025-06-15",
+    "Genre": "HistoricalFiction",
+    "Price": 22.00,
+    "Pages": 220,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 6,
+    "Title": "Book Six",
+    "Author": "Author Six",
+    "Description": "Book Six Description",
+    "ReleaseDate": "2025-09-25",
+    "Genre": "Thriller",
+    "Price": 24.00,
+    "Pages": 320,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 7,
+    "Title": "Book Seven",
+    "Author": "Author Seven",
+    "Description": "Book Seven Description",
+    "ReleaseDate": "2025-08-05",
+    "Genre": "Fantasy",
+    "Price": 26.00,
+    "Pages": 290,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 8,
+    "Title": "Book Eight",
+    "Author": "Author Eight",
+    "Description": "Book Eight Description",
+    "ReleaseDate": "2025-09-09",
+    "Genre": "Romance",
+    "Price": 18.00,
+    "Pages": 340,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 9,
+    "Title": "Book Nine",
+    "Author": "Author Nine",
+    "Description": "Book Nine Description",
+    "ReleaseDate": "2025-09-10",
+    "Genre": "SelfHelp",
+    "Price": 21.00,
+    "Pages": 180,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  },
+  {
+    "Id": 10,
+    "Title": "Book Ten",
+    "Author": "Author Ten",
+    "Description": "Book Ten Description",
+    "ReleaseDate": "2025-06-05",
+    "Genre": "Philosophy",
+    "Price": 20.00,
+    "Pages": 200,
+    "ImageURL": "\\Photos\\Picture.jpg"
+  }
+]
