@@ -44,7 +44,7 @@ namespace OnlineLibrary.Logic
                     return Results.NotFound("No books found.");
                 }
 
-                var book = books.FirstOrDefault(book => book.Id == id);
+                var book = books.FirstOrDefault(book => book.BookId == id);
 
                 if (book == null)
                 {
@@ -59,7 +59,7 @@ namespace OnlineLibrary.Logic
                 var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
                 var books = JsonSerializer.Deserialize<List<Book>>(json, options);
 
-                int newId = books.Any() ? books.Max(b => b.Id) + 1 : 1;
+                int newId = books.Any() ? books.Max(b => b.BookId) + 1 : 1;
 
                 Book book = new(
                     newId,
@@ -78,7 +78,7 @@ namespace OnlineLibrary.Logic
                 var updatedJson = JsonSerializer.Serialize(books, options);
                 await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"), updatedJson);
 
-                return Results.CreatedAtRoute("book", new { id = book.Id }, book);
+                return Results.CreatedAtRoute("book", new { id = book.BookId }, book);
             });
 
             app.MapPut("/books/update/{id}", async ([FromBody] UpdateBook updateBook, int id) =>
@@ -86,7 +86,7 @@ namespace OnlineLibrary.Logic
                 var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
                 var books = JsonSerializer.Deserialize<List<Book>>(json, options);
 
-                var index = books.FindIndex(book => book.Id == id);
+                var index = books.FindIndex(book => book.BookId == id);
 
                 if (index == -1)
                 {
@@ -117,7 +117,7 @@ namespace OnlineLibrary.Logic
                 var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
                 var books = JsonSerializer.Deserialize<List<Book>>(json, options);
 
-                Book foundBook = books.Find(book => book.Id == id);
+                Book foundBook = books.Find(book => book.BookId == id);
 
                 if (foundBook is null)
                 {
