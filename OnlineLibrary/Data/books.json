@@ -1,112 +1,102 @@
 [
   {
-    "Id": 1,
     "Title": "Book One",
-    "Author": "Author One",
+    "AuthorId": 1,
     "Description": "Book One Description",
     "ReleaseDate": "2025-09-15",
-    "Genre": "Memoir",
+    "GenreId": 8,
     "Price": 22.00,
     "Pages": 220,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 2,
     "Title": "Book Two",
-    "Author": "Author Two",
+    "AuthorId": 1,
     "Description": "Book Two Description",
     "ReleaseDate": "2025-07-15",
-    "Genre": "Mystery",
+    "GenreId": 9,
     "Price": 20.00,
     "Pages": 250,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 3,
     "Title": "Book Three",
-    "Author": "Author Three",
+    "AuthorId": 1,
     "Description": "Book Three Description",
     "ReleaseDate": "2025-09-09",
-    "Genre": "Romance",
+    "GenreId": 11,
     "Price": 18.00,
     "Pages": 300,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 4,
     "Title": "Book Four",
-    "Author": "Author Four",
+    "AuthorId": 1,
     "Description": "Book Four Description",
     "ReleaseDate": "2025-09-15",
-    "Genre": "TrueCrime",
+    "GenreId": 16,
     "Price": 22.00,
     "Pages": 280,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 5,
     "Title": "Book Five",
-    "Author": "Author Five",
+    "AuthorId": 1,
     "Description": "Book Five Description",
     "ReleaseDate": "2025-06-15",
-    "Genre": "HistoricalFiction",
+    "GenreId": 4,
     "Price": 22.00,
     "Pages": 220,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 6,
     "Title": "Book Six",
-    "Author": "Author Six",
+    "AuthorId": 1,
     "Description": "Book Six Description",
     "ReleaseDate": "2025-09-25",
-    "Genre": "Thriller",
+    "GenreId": 15,
     "Price": 24.00,
     "Pages": 320,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 7,
     "Title": "Book Seven",
-    "Author": "Author Seven",
+    "AuthorId": 2,
     "Description": "Book Seven Description",
     "ReleaseDate": "2025-08-05",
-    "Genre": "Fantasy",
+    "GenreId": 3,
     "Price": 26.00,
     "Pages": 290,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 8,
     "Title": "Book Eight",
-    "Author": "Author Eight",
+    "AuthorId": 2,
     "Description": "Book Eight Description",
     "ReleaseDate": "2025-09-09",
-    "Genre": "Romance",
+    "GenreId": 11,
     "Price": 18.00,
     "Pages": 340,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 9,
     "Title": "Book Nine",
-    "Author": "Author Nine",
+    "AuthorId": 2,
     "Description": "Book Nine Description",
     "ReleaseDate": "2025-09-10",
-    "Genre": "SelfHelp",
+    "GenreId": 14,
     "Price": 21.00,
     "Pages": 180,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
-    "Id": 10,
     "Title": "Book Ten",
-    "Author": "Author Ten",
+    "AuthorId": 2,
     "Description": "Book Ten Description",
     "ReleaseDate": "2025-06-05",
-    "Genre": "Philosophy",
+    "GenreId": 10,
     "Price": 20.00,
     "Pages": 200,
-    "ImageURL": "\\Photos\\Picture.jpg"
+    "ImageUrl": "\\Photos\\Picture.jpg"
   }
 ]
