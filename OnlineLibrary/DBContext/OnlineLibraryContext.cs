@@ -1,17 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OnlineLibrary.Data;
 using OnlineLibrary.Entities;
 
 namespace OnlineLibrary.DBContext
 {
+    
     public class OnlineLibraryContext : DbContext
     {
-        public  OnlineLibraryContext(DbContextOptions<OnlineLibraryContext> options)
-        : base(options)
-        { 
-        }
-        public DbSet<Book> Books => Set<Book>();
+        public OnlineLibraryContext(DbContextOptions<OnlineLibraryContext> options)
+            : base(options)
+        {
 
-        public DbSet<Genre> Genres => Set<Genre>();
+        }
+        public DbSet<Book> Books { get; set; } = null!;
+        public DbSet<Genre> Genres { get; set; } = null!;
+        public DbSet<Author> Authors { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -19,23 +23,25 @@ namespace OnlineLibrary.DBContext
 
             modelBuilder.Entity<Genre>().HasData(
             
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Autobiography, Name = "Autobiography" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Biography, Name = "Biography" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Fantasy, Name = "Fantasy" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.HistoricalFiction, Name = "Historical Fiction" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.History, Name = "History" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Horror, Name = "Horror" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.LiteraryFiction, Name = "Literary Fiction" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Memoir, Name = "Memoir" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Mystery, Name = "Mystery" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Philosophy, Name = "Philosophy" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Romance, Name = "Romance" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.ScienceNature, Name = "Science Nature" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.ScienceFiction, Name = "Science Fiction" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.SelfHelp, Name = "Self-Help" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.Thriller, Name = "Thriller" },
-                new Genre { Id = (int)OnlineLibrary.DTOs.Genre.TrueCrime, Name = "True Crime" }
+                new Genre { GenreId = 1, Name = "Autobiography" },
+                new Genre { GenreId = 2, Name = "Biography" },
+                new Genre { GenreId = 3, Name = "Fantasy" },
+                new Genre { GenreId = 4, Name = "Historical Fiction" },
+                new Genre { GenreId = 5, Name = "History" },
+                new Genre { GenreId = 6, Name = "Horror" },
+                new Genre { GenreId = 7, Name = "Literary Fiction" },
+                new Genre { GenreId = 8, Name = "Memoir" },
+                new Genre { GenreId = 9, Name = "Mystery" },
+                new Genre { GenreId = 10, Name = "Philosophy" },
+                new Genre { GenreId = 11, Name = "Romance" },
+                new Genre { GenreId = 12, Name = "Science Nature" },
+                new Genre { GenreId = 13, Name = "Science Fiction" },
+                new Genre { GenreId = 14, Name = "Self-Help" },
+                new Genre { GenreId = 15, Name = "Thriller" },
+                new Genre { GenreId = 16, Name = "True Crime" }
             );
+
+            base.OnModelCreating(modelBuilder);
         }
 
     }
