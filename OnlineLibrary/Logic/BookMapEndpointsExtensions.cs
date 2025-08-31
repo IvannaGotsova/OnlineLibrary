@@ -19,8 +19,6 @@ namespace OnlineLibrary.Logic
                 Converters = { new JsonStringEnumConverter(null) }
             };
 
-            app.MapGet("/", () => "Hello World!");
-
             app.MapGet("/books", async () =>
             {
                 var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
@@ -65,9 +63,9 @@ namespace OnlineLibrary.Logic
                     newId,
                     createBook.Title,
                     createBook.Description,
-                    createBook.Author,
+                    createBook.AuthorId,
                     createBook.ReleaseDate,
-                    createBook.Genre,
+                    createBook.GenreId,
                     createBook.Pages,
                     createBook.Price,
                     createBook.ImageUrl
@@ -98,9 +96,9 @@ namespace OnlineLibrary.Logic
                     id,
                     updateBook.Title,
                     updateBook.Description,
-                    updateBook.Author,
+                    updateBook.AuthorId,
                     updateBook.ReleaseDate,
-                    updateBook.Genre,
+                    updateBook.GenreId,
                     updateBook.Pages,
                     updateBook.Price,
                     updateBook.ImageUrl
