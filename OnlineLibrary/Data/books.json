@@ -1,5 +1,6 @@
 [
   {
+    "BookId": 1,
     "Title": "Book One",
     "AuthorId": 1,
     "Description": "Book One Description",
@@ -10,6 +11,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 2,
     "Title": "Book Two",
     "AuthorId": 1,
     "Description": "Book Two Description",
@@ -20,6 +22,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 3,
     "Title": "Book Three",
     "AuthorId": 1,
     "Description": "Book Three Description",
@@ -30,6 +33,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 4,
     "Title": "Book Four",
     "AuthorId": 1,
     "Description": "Book Four Description",
@@ -40,6 +44,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 5,
     "Title": "Book Five",
     "AuthorId": 1,
     "Description": "Book Five Description",
@@ -50,6 +55,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 6,
     "Title": "Book Six",
     "AuthorId": 1,
     "Description": "Book Six Description",
@@ -60,6 +66,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 7,
     "Title": "Book Seven",
     "AuthorId": 2,
     "Description": "Book Seven Description",
@@ -70,6 +77,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 8,
     "Title": "Book Eight",
     "AuthorId": 2,
     "Description": "Book Eight Description",
@@ -80,6 +88,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 9,
     "Title": "Book Nine",
     "AuthorId": 2,
     "Description": "Book Nine Description",
@@ -90,6 +99,7 @@
     "ImageUrl": "\\Photos\\Picture.jpg"
   },
   {
+    "BookId": 10,
     "Title": "Book Ten",
     "AuthorId": 2,
     "Description": "Book Ten Description",

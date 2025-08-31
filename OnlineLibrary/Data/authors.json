@@ -1,8 +1,12 @@
 ﻿[
   {
-    "Name": "Author One"
+    "AuthorId": 1,
+    "Name": "Author One",
+    "Biography": "Author One Biography"
   },
   {
-    "Name": "Author Two"
+    "AuthorId": 2,
+    "Name": "Author Two",
+    "Biography": "Author Two Biography"
   }
 ]

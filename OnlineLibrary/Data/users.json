@@ -1,8 +1,10 @@
 ﻿[
   {
+    "UserId": 1,
     "Name": "User One"
   },
   {
+    "UserId": 2,
     "Name": "User Two"
   }
 ]
