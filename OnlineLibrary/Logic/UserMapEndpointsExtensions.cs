@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OnlineLibrary.DTOs;
+using Microsoft.EntityFrameworkCore;
+using OnlineLibrary.DBContext;
 using OnlineLibrary.Entities;
 using System.IO;
 using System.Text;
@@ -12,30 +13,36 @@ namespace OnlineLibrary.Logic
     {
         public static WebApplication UserMapEndpointsExt(this WebApplication app)
         {
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter(null) }
-            };
-
-            app.MapGet("/users", async () =>
-            {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"));
-                var users = JsonSerializer.Deserialize<List<OnlineLibrary.DTOs.User>>(json, options);
+            app.MapGet("/users", async (OnlineLibraryContext onlineLibraryContext) => {
+            
+                var users = onlineLibraryContext.Users;
 
                 if (users == null)
                 {
                     return Results.NotFound("No users found.");
                 }
 
-                return Results.Ok(users);
+                var html = new System.Text.StringBuilder();
+                html.Append("<!DOCTYPE html><html><head><title>Users</title></head><body>");
+                html.Append("<h1>Users List</h1><table border='1'><tr><th>No.</th><th>Name</th><th>Books</th></tr>");
+
+                foreach (var user in users)
+                {
+                    html.Append("<tr>");
+                    html.Append($"<td>{user.UserId}</td>");
+                    html.Append($"<td>{user.Name}</td>");
+                    html.Append($"<td>{string.Join(", ", user.Books.Select(b => b.Title))}</td>");
+                    html.Append("</tr>");
+                }
+
+                html.Append("</table></body></html>");
+
+                return Results.Content(html.ToString(), "text/html");
             }).WithName("user");
 
-            app.MapGet("/user/details/{id}", async (int id) =>
+            app.MapGet("/users/details/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"));
-                var users = JsonSerializer.Deserialize<List<OnlineLibrary.DTOs.User>>(json, options);
+                var users = onlineLibraryContext.Users;
 
                 if (users == null)
                 {
@@ -49,71 +56,179 @@ namespace OnlineLibrary.Logic
                     return Results.NotFound($"User with ID {id} not found.");
                 }
 
-                return Results.Ok(user);
+                var html = new System.Text.StringBuilder();
+                html.Append("<!DOCTYPE html><html><head><title>User</title></head><body>");
+                html.Append("<h1>User</h1>");
+                html.Append($"<h2>Number: {user.UserId}</h2>");
+                html.Append($"<h2>Name: {user.Name}</h2>");
+                html.Append($"<h3>Books: {string.Join(", ", user.Books.Select(b => b.Title))}</h3>");
+
+                return Results.Content(html.ToString(), "text/html");
             });
 
-            app.MapPost("/users/create/", async ([FromBody] CreateUser createUser) =>
+            app.MapGet("/users/create/", () =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"));
-                var users = JsonSerializer.Deserialize<List<OnlineLibrary.DTOs.User>>(json, options);
+                var html = @"
+                 <!DOCTYPE html>
+                 <html>
+                 <head>
+                     <title>Create User</title>
+                     <style>
+                         body { font-family: Arial; margin: 20px; }
+                         label { display: block; margin-top: 10px; }
+                         input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+                         .book-input { margin-bottom: 5px; }
+                         button { margin-top: 15px; padding: 10px 15px; }
+                     </style>
+                 </head>
+                 <body>
+                     <h1>Create a New User</h1>
+                     <form method='post' action='/users/create'>
+                         <label>Name:</label>
+                         <input type='text' name='Name' required />
+                 
+                         <button type='submit'>Create User</button>
+                     </form>
+                 </body>
+                 </html>";
 
-                int newId = users.Any() ? users.Max(u => u.UserId) + 1 : 1;
+                return Results.Content(html, "text/html");
+            });
+         
+            app.MapPost("/users/create/", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext) =>
+            {
+                var users = onlineLibraryContext.Users;
 
-                OnlineLibrary.DTOs.User user = new(
+                int newId = await users.MaxAsync(u => (int?)u.UserId) ?? 0;
+                newId += 1;
+
+                var formUser = await request.ReadFormAsync();
+                string name = formUser["Name"];
+                var books = formUser["Books"].ToList();
+
+                User user = new(
                     newId,
-                    createUser.Name
+                    name = name
                     );
 
-                users.Add(user);
+                using var transaction = await onlineLibraryContext.Database.BeginTransactionAsync();
 
-                var updatedJson = JsonSerializer.Serialize(users, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"), updatedJson);
+                await onlineLibraryContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Users ON");
 
-                return Results.CreatedAtRoute("user", new { id = user.UserId }, user);
+                onlineLibraryContext.Users.Add(user);
+                await onlineLibraryContext.SaveChangesAsync();
+
+                await onlineLibraryContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Users OFF");
+
+                await transaction.CommitAsync();
+
+                return Results.Redirect($"/users/details/{newId}");
             });
 
-            app.MapPut("/users/update/{id}", async ([FromBody] UpdateUser updateUser, int id) =>
+            app.MapGet("/users/update/{id}", async (OnlineLibraryContext onlineLibraryContext, int id) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"));
-                var users = JsonSerializer.Deserialize<List<OnlineLibrary.DTOs.User>>(json, options);
+                var user = await onlineLibraryContext.Users.FindAsync(id);
 
-                var index = users.FindIndex(user => user.UserId == id);
+                if (user is null)
+                {
+                    return Results.NotFound($"No user with ID {id}");
+                }
 
-                if (index == -1)
+                var html = $@"
+                     <!DOCTYPE html>
+                     <html>
+                     <head>
+                         <title>Update User</title>
+                         <style>
+                             body {{ font-family: Arial; margin: 20px; }}
+                             label {{ display: block; margin-top: 10px; }}
+                             input, textarea {{ width: 100%; padding: 8px; margin-top: 5px; }}
+                             button {{ margin-top: 15px; padding: 10px 15px; }}
+                         </style>
+                     </head>
+                     <body>
+                         <h1>Update User</h1>
+                         <form method='post' action='/users/update/{id}'>
+                             <label>Name:</label>
+                             <input type='text' name='Name' value='{System.Net.WebUtility.HtmlEncode(user.Name)}'required / >
+                 
+                             <button type='submit'>Update User</button>
+                         </form>
+                     </body>
+                     </html>";
+
+                return Results.Content(html, "text/html");
+            });
+   
+            app.MapPost("/users/update/{id}", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext, int id) =>
+            {
+                var users = onlineLibraryContext.Users;
+
+                var formUser = await request.ReadFormAsync();
+                var name = formUser["Name"];
+
+                User foundUser = users.FirstOrDefault(u => u.UserId == id);
+
+                if (foundUser.UserId == -1)
                 {
                     return Results.NotFound($"User with ID {id} not found.");
                 }
 
-                users[index] = new
-                (
-                    id,
-                    updateUser.Name
-                );
+                foundUser.Name = name;
 
-                var updatedJson = JsonSerializer.Serialize(users, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"), updatedJson);
+                await onlineLibraryContext.SaveChangesAsync();
 
-                return Results.NoContent();
+                return Results.Redirect($"/users/details/{id}");
             });
 
-            app.MapDelete("/users/delete/{id}", async (int id) =>
+            app.MapGet("/users/delete/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"));
-                var users = JsonSerializer.Deserialize<List<OnlineLibrary.DTOs.User>>(json, options);
+                var user = await onlineLibraryContext.Users.FindAsync(id);
 
-                OnlineLibrary.DTOs.User foundUser = users.Find(user => user.UserId == id);
+                if (user is null)
+                {
+                    return Results.NotFound($"User with ID {id} not found");
+                }
+
+                var html = $@"
+                 <!DOCTYPE html>
+                 <html>
+                 <head>
+                     <title>Delete Author</title>
+                     <style>
+                         body {{ font-family: Arial; margin: 20px; }}
+                         .warning {{ color: red; font-weight: bold; }}
+                         button {{ margin: 5px; padding: 10px 15px; }}
+                     </style>
+                 </head>
+                 <body>
+                     <h1 class='warning'>Delete Author</h1>
+                     <p>Are you sure you want to delete <strong>{System.Net.WebUtility.HtmlEncode(user.Name)} </   strong>?</p>
+                     <form method='post' action='/users/delete/{id}'>
+                         <button type='submit'>Yes, Delete</button>
+                         <a href='/users/details/{id}'><button type='button'>Cancel</button></a>
+                     </form>
+                 </body>
+                 </html>";
+
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/users/delete/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
+            {
+                var users = onlineLibraryContext.Users;
+
+                User foundUser = await users.FirstOrDefaultAsync(u => u.UserId == id);
 
                 if (foundUser is null)
                 {
                     return Results.NotFound($"User with ID {id} not found.");
                 }
 
-                users.Remove(foundUser);
+                onlineLibraryContext.Users.Remove(foundUser);
+                await onlineLibraryContext.SaveChangesAsync();
 
-                var updatedJson = JsonSerializer.Serialize(users, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "users.json"), updatedJson);
-
-                return Results.NoContent();
+                return Results.Redirect($"/users");
             });
 
             return app;
