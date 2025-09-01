@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OnlineLibrary.DTOs;
+using Microsoft.EntityFrameworkCore;
+using OnlineLibrary.DBContext;
+using OnlineLibrary.Entities;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -13,29 +15,42 @@ namespace OnlineLibrary.Logic
         public static WebApplication BookMapEndpointsExt(this WebApplication app)
         {
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter(null) }
-            };
+            app.MapGet("/books", async (OnlineLibraryContext onlineLibraryContext) => {
 
-            app.MapGet("/books", async () =>
-            {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
-                var books = JsonSerializer.Deserialize<List<Book>>(json, options);
+                var books = onlineLibraryContext.Books;
 
                 if (books == null)
                 {
                     return Results.NotFound("No books found.");
                 }
 
-                return Results.Ok(books);
+                var html = new System.Text.StringBuilder();
+                html.Append("<!DOCTYPE html><html><head><title>Books</title></head><body>");
+                html.Append("<h1>Books List</h1><table border='1'><tr><th>No.</th><th>Title</th><th>Description</th><th>Author</th><th>Genre</th><th>Image</th><th>Release Date</th><th>Pages</th><th>Price</th></tr>");
+
+                foreach (var book in books)
+                {
+                    html.Append("<tr>");
+                    html.Append($"<td>{book.BookId}</td>");
+                    html.Append($"<td>{book.Title}</td>");
+                    html.Append($"<td>{book.Description}</td>");
+                    html.Append($"<td>{book.Author}</td>");
+                    html.Append($"<td>{book.Genre}</td>");
+                    html.Append($"<td>{book.ImageUrl}</td>");
+                    html.Append($"<td>{book.ReleaseDate}</td>");
+                    html.Append($"<td>{book.Pages}</td>");
+                    html.Append($"<td>{book.Price}</td>");
+                    html.Append("</tr>");
+                }
+
+                html.Append("</table></body></html>");
+
+                return Results.Content(html.ToString(), "text/html");
             }).WithName("book");
 
-            app.MapGet("/books/details/{id}", async (int id) =>
+            app.MapGet("/books/details/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
-                var books = JsonSerializer.Deserialize<List<Book>>(json, options);
+                var books = onlineLibraryContext.Books;
 
                 if (books == null)
                 {
@@ -49,85 +64,257 @@ namespace OnlineLibrary.Logic
                     return Results.NotFound($"Book with ID {id} not found.");
                 }
 
-                return Results.Ok(book);
+                var html = new System.Text.StringBuilder();
+                html.Append("<!DOCTYPE html><html><head><title>Books</title></head><body>");
+                html.Append("<h1>Book</h1>");
+                html.Append($"<h2>Number: {book.BookId}</h2>");
+                html.Append($"<h2>Title: {book.Title}</h2>");
+                html.Append($"<h3>Description: {book.Description}</h3>");
+                html.Append($"<h3>Author: {book.Author}</h3>");
+                html.Append($"<h3>Genre: {book.Genre}</h3>");
+                html.Append($"<h3>{book.ImageUrl}</h3>");
+                html.Append($"<h3>release Date: {book.ReleaseDate}</h3>");
+                html.Append($"<h3>Pages: {book.Pages}</h3>");
+                html.Append($"<h3>Price: {book.Price}</h3>");
+
+                return Results.Content(html.ToString(), "text/html");
             });
 
-            app.MapPost("/books/create/", async ([FromBody] CreateBook createBook) =>
-            {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
-                var books = JsonSerializer.Deserialize<List<Book>>(json, options);
 
-                int newId = books.Any() ? books.Max(b => b.BookId) + 1 : 1;
+            app.MapGet("/books/create/", () =>
+            {
+                var html = @"
+                 <!DOCTYPE html>
+                 <html>
+                 <head>
+                     <title>Create Book</title>
+                     <style>
+                         body { font-family: Arial; margin: 20px; }
+                         label { display: block; margin-top: 10px; }
+                         input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+                         .book-input { margin-bottom: 5px; }
+                         button { margin-top: 15px; padding: 10px 15px; }
+                     </style>
+                 </head>
+                 <body>
+                     <h1>Create a New Book</h1>
+                     <form method='post' action='/books/create'>
+                         <label>Title:</label>
+                         <input type='text' name='Title' required />
+                 
+                         <label>Description:</label>
+                         <textarea name='Description' rows='4' required></textarea>
+
+                         <label>Author:</label>
+                         <input type='number' name='Author' rows='4' required />
+
+                         <label>Genre:</label>
+                         <input type='number' name='Genre' rows='4' required />
+
+                         <label>Image:</label>
+                         <textarea name='Image' rows='4' required></textarea>
+
+                         <label>Release Date:</label>
+                         <input type='date'  name='Release Date' rows='4' required />
+
+                         <label>Price:</label>
+                         <input type='number'  name='Price' rows='4' required />
+
+                         <label>Pages:</label>
+                         <input type='number' name='Pages' rows='4' required />
+                         <button type='submit'>Create Book</button>
+                     </form>
+                 </body>
+                 </html>";
+
+                return Results.Content(html, "text/html");
+            });
+            
+            app.MapPost("/books/create/", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext) =>
+            {
+                var books = onlineLibraryContext.Books;
+
+                int newId = await books.MaxAsync(b => (int?)b.BookId) ?? 0;
+                newId += 1;
+
+                var formBook = await request.ReadFormAsync();
+                string title = formBook["Title"];
+                string description = formBook["Description"];
+                var author = Convert.ToInt32(formBook["Author"]);
+                var genre = Convert.ToInt32(formBook["Genre"]);
+                string image = formBook["Image"];
+                var releaseDate = Convert.ToDateTime(formBook["Release Date"]);
+                decimal price = Convert.ToDecimal(formBook["Price"]);
+                int pages = Convert.ToInt32(formBook["Pages"]);
 
                 Book book = new(
                     newId,
-                    createBook.Title,
-                    createBook.Description,
-                    createBook.AuthorId,
-                    createBook.ReleaseDate,
-                    createBook.GenreId,
-                    createBook.Pages,
-                    createBook.Price,
-                    createBook.ImageUrl
-                    );
+                    title = title,
+                    description = description,
+                    author = author,
+                    releaseDate = releaseDate,
+                    genre = genre,
+                    pages = pages,
+                    price = price,
+                    image = image
+                );
 
-                books.Add(book);
+                using var transaction = await onlineLibraryContext.Database.BeginTransactionAsync();
 
-                var updatedJson = JsonSerializer.Serialize(books, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"), updatedJson);
+                await onlineLibraryContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Books ON");
 
-                return Results.CreatedAtRoute("book", new { id = book.BookId }, book);
+                onlineLibraryContext.Books.Add(book);
+                await onlineLibraryContext.SaveChangesAsync();
+
+                await onlineLibraryContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Books OFF");
+
+                await transaction.CommitAsync();
+
+                return Results.Redirect($"/books/details/{newId}");
             });
 
-            app.MapPut("/books/update/{id}", async ([FromBody] UpdateBook updateBook, int id) =>
+            app.MapGet("/books/update/{id}", async (OnlineLibraryContext onlineLibraryContext, int id) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
-                var books = JsonSerializer.Deserialize<List<Book>>(json, options);
+                var book = await onlineLibraryContext.Books.FindAsync(id);
 
-                var index = books.FindIndex(book => book.BookId == id);
+                if (book is null)
+                {
+                    return Results.NotFound($"No book with ID {id}");
+                }
 
-                if (index == -1)
+                var html = $@"
+                     <!DOCTYPE html>
+                     <html>
+                     <head>
+                         <title>Update Book</title>
+                         <style>
+                             body {{ font-family: Arial; margin: 20px; }}
+                             label {{ display: block; margin-top: 10px; }}
+                             input, textarea {{ width: 100%; padding: 8px; margin-top: 5px; }}
+                             button {{ margin-top: 15px; padding: 10px 15px; }}
+                         </style>
+                     </head>
+                     <body>
+                         <h1>Update Book</h1>
+                         <form method='post' action='/books/update/{id}'>
+                             <label>Title:</label>
+                             <input type='text' name='Title' value='{System.Net.WebUtility.HtmlEncode(book.Title)}'required / >
+                  
+                             <label>Description:</label>
+                             <textarea name='Description' rows='4' required>
+                      {System.Net.WebUtility.HtmlEncode(book.Description)}
+                             </textarea>
+                 
+                              
+                             <label>Author:</label>
+                             <input type='number' name='Author' value='{System.Net.WebUtility.HtmlEncode(book.AuthorId.ToString())}'required / >
+
+                             <label>Genre:</label>
+                             <input type='number' name='Genre' value='{System.Net.WebUtility.HtmlEncode(book.GenreId.ToString())}'required / >
+
+                             <label>Release Date:</label>
+                             <input type='date' name='Release Date' value='{System.Net.WebUtility.HtmlEncode(book.ReleaseDate.ToString())}'required / >
+
+                             <label>Price:</label>
+                             <input type='number' name='Price' value='{System.Net.WebUtility.HtmlEncode(book.Price.ToString())}'required / >
+
+                             <label>Pages:</label>
+                             <input type='number' name='Pages' value='{System.Net.WebUtility.HtmlEncode(book.Pages.ToString())}'required / >
+
+                             <label>Image:</label>
+                             <input type='text' name='Image' value='{System.Net.WebUtility.HtmlEncode(book.ImageUrl)}'required / >
+                            
+                             <button type='submit'>Update Book</button>
+                         </form>
+                     </body>
+                     </html>";
+
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/books/update/{id}", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext, int id) =>
+            {
+                var books = onlineLibraryContext.Books;
+
+                var formBook = await request.ReadFormAsync();
+                string title = formBook["Title"];
+                string description = formBook["Description"];
+                var author = Convert.ToInt32(formBook["Author"]);
+                var genre = Convert.ToInt32(formBook["Genre"]);
+                string image = formBook["Image"];
+                var releaseDate = Convert.ToDateTime(formBook["Release Date"]);
+                decimal price = Convert.ToDecimal(formBook["Price"]);
+                int pages = Convert.ToInt32(formBook["Pages"]);
+
+                Book foundBook = books.FirstOrDefault(b => b.BookId == id);
+
+                if (foundBook.BookId == -1)
                 {
                     return Results.NotFound($"Book with ID {id} not found.");
                 }
 
-                books[index] = new Book
-                (
-                    id,
-                    updateBook.Title,
-                    updateBook.Description,
-                    updateBook.AuthorId,
-                    updateBook.ReleaseDate,
-                    updateBook.GenreId,
-                    updateBook.Pages,
-                    updateBook.Price,
-                    updateBook.ImageUrl
-                );
+                foundBook.Title = title;
+                foundBook.Description = description;
+                foundBook.AuthorId = author;
+                foundBook.GenreId = genre;
+                foundBook.ImageUrl = image;
+                foundBook.ReleaseDate = releaseDate;
+                foundBook.Pages = pages;
+                foundBook.Price = price;
 
-                var updatedJson = JsonSerializer.Serialize(books, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"), updatedJson);
+                await onlineLibraryContext.SaveChangesAsync();
 
-                return Results.NoContent();
+                return Results.Redirect($"/books/details/{id}");
             });
 
-            app.MapDelete("/books/delete/{id}", async (int id) =>
+            app.MapGet("/books/delete/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"));
-                var books = JsonSerializer.Deserialize<List<Book>>(json, options);
+                var book = await onlineLibraryContext.Books.FindAsync(id);
 
-                Book foundBook = books.Find(book => book.BookId == id);
+                if (book is null)
+                {
+                    return Results.NotFound($"Book with ID {id} not found");
+                }
+
+                var html = $@"
+                 <!DOCTYPE html>
+                 <html>
+                 <head>
+                     <title>Delete Book</title>
+                     <style>
+                         body {{ font-family: Arial; margin: 20px; }}
+                         .warning {{ color: red; font-weight: bold; }}
+                         button {{ margin: 5px; padding: 10px 15px; }}
+                     </style>
+                 </head>
+                 <body>
+                     <h1 class='warning'>Delete Book</h1>
+                     <p>Are you sure you want to delete <strong>{System.Net.WebUtility.HtmlEncode(book.Title)} </   strong>?</p>
+                     <form method='post' action='/books/delete/{id}'>
+                         <button type='submit'>Yes, Delete</button>
+                         <a href='/books/details/{id}'><button type='button'>Cancel</button></a>
+                     </form>
+                 </body>
+                 </html>";
+
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/books/delete/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
+            {
+                var books = onlineLibraryContext.Books;
+
+                Book foundBook = await books.FirstOrDefaultAsync(b => b.BookId == id);
 
                 if (foundBook is null)
                 {
                     return Results.NotFound($"Book with ID {id} not found.");
                 }
 
-                books.Remove(foundBook);
+                onlineLibraryContext.Books.Remove(foundBook);
+                await onlineLibraryContext.SaveChangesAsync();
 
-                var updatedJson = JsonSerializer.Serialize(books, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "books.json"), updatedJson);
-
-                return Results.NoContent();
+                return Results.Redirect($"/books");
             });
 
             return app;
