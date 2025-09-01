@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OnlineLibrary.DTOs;
+using Microsoft.EntityFrameworkCore;
+using OnlineLibrary.DBContext;
+using OnlineLibrary.Entities;
 using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace OnlineLibrary.Logic
 {
@@ -12,29 +15,37 @@ namespace OnlineLibrary.Logic
         public static WebApplication AuthorMapEndpointsExt(this WebApplication app)
         {
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter(null) }
-            };
+            app.MapGet("/authors", async (OnlineLibraryContext onlineLibraryContext) => {
 
-            app.MapGet("/authors", async () =>
-            {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"));
-                var authors = JsonSerializer.Deserialize<List<Author>>(json, options);
+                var authors = onlineLibraryContext.Authors;
 
                 if (authors == null)
                 {
                     return Results.NotFound("No authors found.");
                 }
 
-                return Results.Ok(authors);
+                var html = new System.Text.StringBuilder();
+                html.Append("<!DOCTYPE html><html><head><title>Authors</title></head><body>");
+                html.Append("<h1>Author</h1><table border='1'><tr><th>No.</th><th>Name</th><th>Biography</th><th>Books</th></tr>");
+
+                foreach (var author in authors)
+                {
+                    html.Append("<tr>");
+                    html.Append($"<td>{author.AuthorId}</td>");
+                    html.Append($"<td>{author.Name}</td>");
+                    html.Append($"<td>{author.Biography}</td>");
+                    html.Append($"<td>{string.Join(", ", author.Books.Select(b => b.Title))}</td>");
+                    html.Append("</tr>");
+                }
+
+                html.Append("</table></body></html>");
+
+                return Results.Content(html.ToString(), "text/html");
             }).WithName("author");
 
-            app.MapGet("/author/details/{id}", async (int id) =>
+            app.MapGet("/authors/details/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"));
-                var authors = JsonSerializer.Deserialize<List<Author>>(json, options);
+                var authors = onlineLibraryContext.Authors;
 
                 if (authors == null)
                 {
@@ -48,73 +59,191 @@ namespace OnlineLibrary.Logic
                     return Results.NotFound($"Author with ID {id} not found.");
                 }
 
-                return Results.Ok(author);
+                var html = new System.Text.StringBuilder();
+                html.Append("<!DOCTYPE html><html><head><title>Author</title></head><body>");
+                html.Append("<h1>Author</h1>");
+                html.Append($"<h2>Number: {author.AuthorId}</h2>");
+                html.Append($"<h2>Name: {author.Name}</h2>");
+                html.Append($"<h3>Biography: {author.Biography}</h3>");
+                html.Append($"<h3>Books: {string.Join(", ", author.Books.Select(b => b.Title))}</h3>");
+
+                return Results.Content(html.ToString(), "text/html");
             });
 
-            app.MapPost("/authors/create/", async ([FromBody] CreateAuthor createAuthor) =>
+            app.MapGet("/authors/create/", () =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"));
-                var authors = JsonSerializer.Deserialize<List<Author>>(json, options);
+                var html = @"
+                 <!DOCTYPE html>
+                 <html>
+                 <head>
+                     <title>Create Author</title>
+                     <style>
+                         body { font-family: Arial; margin: 20px; }
+                         label { display: block; margin-top: 10px; }
+                         input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+                         .book-input { margin-bottom: 5px; }
+                         button { margin-top: 15px; padding: 10px 15px; }
+                     </style>
+                 </head>
+                 <body>
+                     <h1>Create a New Author</h1>
+                     <form method='post' action='/authors/create'>
+                         <label>Name:</label>
+                         <input type='text' name='Name' required />
+                 
+                         <label>Biography:</label>
+                         <textarea name='Biography' rows='4' required></textarea>
+                         <button type='submit'>Create Author</button>
+                     </form>
+                 </body>
+                 </html>";
 
-                int newId = authors.Any() ? authors.Max(a => a.AuthorId) + 1 : 1;
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/authors/create/", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext) =>
+            {
+                var authors = onlineLibraryContext.Authors;
+
+                int newId = await authors.MaxAsync(a => (int?)a.AuthorId) ?? 0;
+                newId += 1;
+
+                var formAuthor = await request.ReadFormAsync();
+                string name = formAuthor["Name"];
+                string biography = formAuthor["Biography"];
+                var books = formAuthor["Books"].ToList();
 
                 Author author = new(
                     newId,
-                    createAuthor.Name,
-                    createAuthor.Biography
+                    name = name,
+                    biography = biography
                     );
 
-                authors.Add(author);
+                using var transaction = await onlineLibraryContext.Database.BeginTransactionAsync();
 
-                var updatedJson = JsonSerializer.Serialize(authors, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"), updatedJson);
+                await onlineLibraryContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Authors ON");
 
-                return Results.CreatedAtRoute("author", new { id = author.AuthorId }, author);
+                onlineLibraryContext.Authors.Add(author);
+                await onlineLibraryContext.SaveChangesAsync();
+
+                await onlineLibraryContext.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Authors OFF");
+
+                await transaction.CommitAsync();
+
+                return Results.Redirect($"/authors/details/{newId}");
             });
 
-            app.MapPut("/authors/update/{id}", async ([FromBody] UpdateAuthor updateAuthor, int id) =>
+            app.MapGet("/authors/update/{id}", async (OnlineLibraryContext onlineLibraryContext, int id) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"));
-                var authors = JsonSerializer.Deserialize<List<Author>>(json, options);
+                var author = await onlineLibraryContext.Authors.FindAsync(id);
 
-                var index = authors.FindIndex(author => author.AuthorId == id);
+                if (author is null)
+                {
+                    return Results.NotFound($"No author with ID {id}");
+                }
 
-                if (index == -1)
+                var html = $@"
+                     <!DOCTYPE html>
+                     <html>
+                     <head>
+                         <title>Update Author</title>
+                         <style>
+                             body {{ font-family: Arial; margin: 20px; }}
+                             label {{ display: block; margin-top: 10px; }}
+                             input, textarea {{ width: 100%; padding: 8px; margin-top: 5px; }}
+                             button {{ margin-top: 15px; padding: 10px 15px; }}
+                         </style>
+                     </head>
+                     <body>
+                         <h1>Update Author</h1>
+                         <form method='post' action='/authors/update/{id}'>
+                             <label>Name:</label>
+                             <input type='text' name='Name' value='{System.Net.WebUtility.HtmlEncode (author.Name)}'required / >
+                  
+                             <label>Biography:</label>
+                             <textarea name='Biography' rows='4' required>
+                 {System.Net.WebUtility.HtmlEncode(author.Biography)}
+                             </textarea>
+                 
+                             <button type='submit'>Update Author</button>
+                         </form>
+                     </body>
+                     </html>";
+
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/authors/update/{id}", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext, int id) =>
+            {
+                var authors = onlineLibraryContext.Authors;
+
+                var formAuthor = await request.ReadFormAsync();
+                var name = formAuthor["Name"];
+                var biography = formAuthor["Biography"];
+
+                Author foundAuthor = authors.FirstOrDefault(a => a.AuthorId == id);
+
+                if (foundAuthor.AuthorId == -1)
                 {
                     return Results.NotFound($"Author with ID {id} not found.");
                 }
 
-                authors[index] = new
-                (
-                    id,
-                    updateAuthor.Name,
-                    updateAuthor.Biography
-                );
+                foundAuthor.Name = name;
+                foundAuthor.Biography = biography;
 
-                var updatedJson = JsonSerializer.Serialize(authors, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"), updatedJson);
+                await onlineLibraryContext.SaveChangesAsync();
 
-                return Results.NoContent();
+                return Results.Redirect($"/authors/details/{id}");
             });
 
-            app.MapDelete("/authors/delete/{id}", async (int id) =>
+            app.MapGet("/authors/delete/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
             {
-                var json = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"));
-                var authors = JsonSerializer.Deserialize<List<Author>>(json, options);
+                var author = await onlineLibraryContext.Authors.FindAsync(id);
 
-                Author foundAuthor = authors.Find(author => author.AuthorId == id);
+                if (author is null)
+                {
+                    return Results.NotFound($"Author with ID {id} not found");
+                }
+
+                var html = $@"
+                 <!DOCTYPE html>
+                 <html>
+                 <head>
+                     <title>Delete Author</title>
+                     <style>
+                         body {{ font-family: Arial; margin: 20px; }}
+                         .warning {{ color: red; font-weight: bold; }}
+                         button {{ margin: 5px; padding: 10px 15px; }}
+                     </style>
+                 </head>
+                 <body>
+                     <h1 class='warning'>Delete Author</h1>
+                     <p>Are you sure you want to delete <strong>{System.Net.WebUtility.HtmlEncode (   author.     Name)} </   strong>?</p>
+                     <form method='post' action='/authors/delete/{id}'>
+                         <button type='submit'>Yes, Delete</button>
+                         <a href='/authors/details/{id}'><button type='button'>Cancel</button></a>
+                     </form>
+                 </body>
+                 </html>";
+
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/authors/delete/{id}", async (int id, OnlineLibraryContext onlineLibraryContext) =>
+            {
+                var authors = onlineLibraryContext.Authors;
+
+                Author foundAuthor = await authors.FirstOrDefaultAsync(a => a.AuthorId == id);
 
                 if (foundAuthor is null)
                 {
                     return Results.NotFound($"Author with ID {id} not found.");
                 }
 
-                authors.Remove(foundAuthor);
+                onlineLibraryContext.Authors.Remove(foundAuthor);
+                await onlineLibraryContext.SaveChangesAsync();
 
-                var updatedJson = JsonSerializer.Serialize(authors, options);
-                await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Data", "authors.json"), updatedJson);
-
-                return Results.NoContent();
+                return Results.Redirect($"/authors");
             });
 
             return app;
