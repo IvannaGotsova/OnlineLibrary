@@ -2,24 +2,30 @@
 {
     public class Book
     {
-        public Book(int id, string title, string description, string author, DateTime releaseDate, Genre genre, int pages, decimal price, string imageUrl)
+        public Book(string title)
         {
-            Id = id;
+            Title = title;
+        }
+        public Book(int bookId, string title, string description, int authorId, DateTime releaseDate, int genreId, int pages, decimal price, string imageUrl)
+        {
+            BookId = bookId;
             Title = title;
             Description = description;
-            Author = author;
+            AuthorId = authorId;
             ReleaseDate = releaseDate;
-            Genre = genre;
+            GenreId = genreId;
             Pages = pages;
             Price = price;
             ImageUrl = imageUrl;
         }
 
-        public int Id { get; set; }
+        public int BookId { get; set; }
         public string Title { get; set; }   
-        public string Description { get; set; } 
-        public string Author { get; set; }
+        public string Description { get; set; }
+        public int AuthorId { get; set; }
+        public Author Author { get; set; }
         public DateTime ReleaseDate { get; set; }
+        public int GenreId { get; set; }
         public Genre Genre { get; set; }
         public int Pages { get; set; }
         public decimal Price { get; set; }
