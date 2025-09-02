@@ -26,6 +26,9 @@ namespace OnlineLibrary.Logic
 
                 var html = new System.Text.StringBuilder();
                 html.Append("<!DOCTYPE html><html><head><title>Books</title></head><body>");
+                html.Append("<button onclick=\"window.location.href='/authors'\">Go to AUTHORS</button>");
+                html.Append("<button onclick =\"window.location.href='/users'\"> Go to USERS</button >");
+                html.Append("<button onclick=\"window.location.href='/BOOKS/create'\">CREATE BOOK</button>");
                 html.Append("<h1>Books List</h1><table border='1'><tr><th>No.</th><th>Title</th><th>Description</th><th>Author</th><th>Genre</th><th>Image</th><th>Release Date</th><th>Pages</th><th>Price</th></tr>");
 
                 foreach (var book in books)
@@ -40,6 +43,12 @@ namespace OnlineLibrary.Logic
                     html.Append($"<td>{book.ReleaseDate}</td>");
                     html.Append($"<td>{book.Pages}</td>");
                     html.Append($"<td>{book.Price}</td>");
+                    html.Append("<td>");
+                    html.Append($"<button onclick=\"window.location.href='/books/details/{book.BookId}/'\">Details</button>");
+                    html.Append("</td>");
+                    html.Append("<td>");
+                    html.Append($"<button onclick=\"window.location.href='/books/delete/{book.BookId}/'\">Delete</button>");
+                    html.Append("</td>");
                     html.Append("</tr>");
                 }
 
@@ -66,16 +75,21 @@ namespace OnlineLibrary.Logic
 
                 var html = new System.Text.StringBuilder();
                 html.Append("<!DOCTYPE html><html><head><title>Books</title></head><body>");
+                html.Append("<button onclick =\"window.location.href='/books'\"> Go to BOOKS</button >");
+                html.Append("<button onclick =\"window.location.href='/authors'\"> Go to AUTHORS</button >");
+                html.Append("<button onclick=\"window.location.href='/users'\">Go to USERS</button>");
                 html.Append("<h1>Book</h1>");
                 html.Append($"<h2>Number: {book.BookId}</h2>");
                 html.Append($"<h2>Title: {book.Title}</h2>");
                 html.Append($"<h3>Description: {book.Description}</h3>");
                 html.Append($"<h3>Author: {book.Author}</h3>");
                 html.Append($"<h3>Genre: {book.Genre}</h3>");
-                html.Append($"<h3>{book.ImageUrl}</h3>");
-                html.Append($"<h3>release Date: {book.ReleaseDate}</h3>");
+                html.Append($"<h3>Image: {book.ImageUrl}</h3>");
+                html.Append($"<h3>Release Date: {book.ReleaseDate}</h3>");
                 html.Append($"<h3>Pages: {book.Pages}</h3>");
                 html.Append($"<h3>Price: {book.Price}</h3>");
+                html.Append($"<button onclick=\"window.location.href='/books/update/ {book.BookId}/'\">Update</button>");
+                html.Append($"<button onclick=\"window.location.href='/books/delete/ {book.BookId}/'\">Delete</button>");
 
                 return Results.Content(html.ToString(), "text/html");
             });
@@ -97,13 +111,16 @@ namespace OnlineLibrary.Logic
                      </style>
                  </head>
                  <body>
+                     <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                     <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                     <button onclick=""window.location.href='/users'"">Go to USERS</button>
                      <h1>Create a New Book</h1>
                      <form method='post' action='/books/create'>
                          <label>Title:</label>
-                         <input type='text' name='Title' required />
+                         <input type='text' name='Title' minlength='2' maxlength ='50' required />
                  
                          <label>Description:</label>
-                         <textarea name='Description' rows='4' required></textarea>
+                         <textarea name='Description' minlength='2' maxlength ='10000' rows='4' required></textarea>
 
                          <label>Author:</label>
                          <input type='number' name='Author' rows='4' required />
@@ -112,16 +129,16 @@ namespace OnlineLibrary.Logic
                          <input type='number' name='Genre' rows='4' required />
 
                          <label>Image:</label>
-                         <textarea name='Image' rows='4' required></textarea>
+                         <textarea name='Image'  minlength='5' maxlength ='100' rows='4' required></textarea>
 
                          <label>Release Date:</label>
                          <input type='date'  name='Release Date' rows='4' required />
 
                          <label>Price:</label>
-                         <input type='number'  name='Price' rows='4' required />
+                         <input type='number'  name='Price' step='1' min='1' max='5000' rows='4' required />
 
                          <label>Pages:</label>
-                         <input type='number' name='Pages' rows='4' required />
+                         <input type='number' name='Pages' step='0.01' min='0.00' max='50000.00' rows='4' required />
                          <button type='submit'>Create Book</button>
                      </form>
                  </body>
@@ -195,17 +212,19 @@ namespace OnlineLibrary.Logic
                          </style>
                      </head>
                      <body>
+                         <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                         <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                         <button onclick=""window.location.href='/users'"">Go to USERS</button>
                          <h1>Update Book</h1>
                          <form method='post' action='/books/update/{id}'>
                              <label>Title:</label>
-                             <input type='text' name='Title' value='{System.Net.WebUtility.HtmlEncode(book.Title)}'required / >
+                             <input type='text' name='Title' minlength='2' maxlength ='50' value='{System.Net.WebUtility.HtmlEncode(book.Title)}'required / >
                   
                              <label>Description:</label>
-                             <textarea name='Description' rows='4' required>
-                      {System.Net.WebUtility.HtmlEncode(book.Description)}
+                             <textarea name='Description' rows='4' minlength='2' maxlength ='10000' required>
+                                {System.Net.WebUtility.HtmlEncode(book.Description)}
                              </textarea>
-                 
-                              
+
                              <label>Author:</label>
                              <input type='number' name='Author' value='{System.Net.WebUtility.HtmlEncode(book.AuthorId.ToString())}'required / >
 
@@ -213,16 +232,16 @@ namespace OnlineLibrary.Logic
                              <input type='number' name='Genre' value='{System.Net.WebUtility.HtmlEncode(book.GenreId.ToString())}'required / >
 
                              <label>Release Date:</label>
-                             <input type='date' name='Release Date' value='{System.Net.WebUtility.HtmlEncode(book.ReleaseDate.ToString())}'required / >
+                             <input type='date' name='Release Date' value='{System.Net.WebUtility.HtmlEncode(book.ReleaseDate.ToString("yyyy-MM-dd"))}'required / >
 
                              <label>Price:</label>
-                             <input type='number' name='Price' value='{System.Net.WebUtility.HtmlEncode(book.Price.ToString())}'required / >
+                             <input type='number' name='Price' name='Price' step='1' min='1' max='5000' value='{System.Net.WebUtility.HtmlEncode(book.Price.ToString())}'required / >
 
                              <label>Pages:</label>
-                             <input type='number' name='Pages' value='{System.Net.WebUtility.HtmlEncode(book.Pages.ToString())}'required / >
+                             <input type='number' name='Pages' name='Pages' step='0.01' min='0.00' max='50000.00' value='{System.Net.WebUtility.HtmlEncode(book.Pages.ToString())}'required / >
 
                              <label>Image:</label>
-                             <input type='text' name='Image' value='{System.Net.WebUtility.HtmlEncode(book.ImageUrl)}'required / >
+                             <input type='text' name='Image' minlength='5' maxlength ='100' value='{System.Net.WebUtility.HtmlEncode(book.ImageUrl)}'required / >
                             
                              <button type='submit'>Update Book</button>
                          </form>
@@ -288,6 +307,9 @@ namespace OnlineLibrary.Logic
                      </style>
                  </head>
                  <body>
+                     <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                     <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                     <button onclick=""window.location.href='/users'"">Go to USERS</button>
                      <h1 class='warning'>Delete Book</h1>
                      <p>Are you sure you want to delete <strong>{System.Net.WebUtility.HtmlEncode(book.Title)} </   strong>?</p>
                      <form method='post' action='/books/delete/{id}'>

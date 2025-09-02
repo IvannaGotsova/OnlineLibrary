@@ -26,6 +26,9 @@ namespace OnlineLibrary.Logic
 
                 var html = new System.Text.StringBuilder();
                 html.Append("<!DOCTYPE html><html><head><title>Authors</title></head><body>");
+                html.Append("<button onclick =\"window.location.href='/books'\"> Go to BOOKS</button >");
+                html.Append("<button onclick=\"window.location.href='/users'\">Go to USERS</button>");
+                html.Append("<button onclick=\"window.location.href='/authors/create'\">CREATE AUTHOR</button>");
                 html.Append("<h1>Author</h1><table border='1'><tr><th>No.</th><th>Name</th><th>Biography</th><th>Books</th></tr>");
 
                 foreach (var author in authors)
@@ -35,10 +38,14 @@ namespace OnlineLibrary.Logic
                     html.Append($"<td>{author.Name}</td>");
                     html.Append($"<td>{author.Biography}</td>");
                     html.Append($"<td>{string.Join(", ", author.Books.Select(b => b.Title))}</td>");
+                    html.Append("<td>");
+                    html.Append($"<button onclick=\"window.location.href='/authors/details/{author.AuthorId}/'\">Details</button>");
+                    html.Append("</td>");
+                    html.Append("<td>");
+                    html.Append($"<button onclick=\"window.location.href='/authors/delete/{author.AuthorId}/'\">Delete</button>");
+                    html.Append("</td>");
                     html.Append("</tr>");
                 }
-
-                html.Append("</table></body></html>");
 
                 return Results.Content(html.ToString(), "text/html");
             }).WithName("author");
@@ -61,11 +68,16 @@ namespace OnlineLibrary.Logic
 
                 var html = new System.Text.StringBuilder();
                 html.Append("<!DOCTYPE html><html><head><title>Author</title></head><body>");
+                html.Append("<button onclick =\"window.location.href='/books'\"> Go to BOOKS</button >");
+                html.Append("<button onclick =\"window.location.href='/authors'\"> Go to AUTHORS</button >");
+                html.Append("<button onclick=\"window.location.href='/users'\">Go to USERS</button>");
                 html.Append("<h1>Author</h1>");
                 html.Append($"<h2>Number: {author.AuthorId}</h2>");
                 html.Append($"<h2>Name: {author.Name}</h2>");
                 html.Append($"<h3>Biography: {author.Biography}</h3>");
                 html.Append($"<h3>Books: {string.Join(", ", author.Books.Select(b => b.Title))}</h3>");
+                html.Append($"<button onclick=\"window.location.href='/authors/update/{author.AuthorId}/'\">Update</button>");
+                html.Append($"<button onclick=\"window.location.href='/authors/delete/{author.AuthorId}/'\">Delete</button>");
 
                 return Results.Content(html.ToString(), "text/html");
             });
@@ -86,13 +98,16 @@ namespace OnlineLibrary.Logic
                      </style>
                  </head>
                  <body>
+                     <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                     <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                     <button onclick=""window.location.href='/users'"">Go to USERS</button>
                      <h1>Create a New Author</h1>
                      <form method='post' action='/authors/create'>
                          <label>Name:</label>
-                         <input type='text' name='Name' required />
+                         <input type='text' name='Name' minlength='2' maxlength ='50' required />
                  
                          <label>Biography:</label>
-                         <textarea name='Biography' rows='4' required></textarea>
+                         <textarea name='Biography' minlength='2' maxlength ='1000' rows='4' required></textarea>
                          <button type='submit'>Create Author</button>
                      </form>
                  </body>
@@ -155,13 +170,16 @@ namespace OnlineLibrary.Logic
                          </style>
                      </head>
                      <body>
+                         <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                         <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                         <button onclick=""window.location.href='/users'"">Go to USERS</button>
                          <h1>Update Author</h1>
                          <form method='post' action='/authors/update/{id}'>
                              <label>Name:</label>
-                             <input type='text' name='Name' value='{System.Net.WebUtility.HtmlEncode (author.Name)}'required / >
+                             <input type='text' name='Name' minlength='2' maxlength ='50' value='{System.Net.WebUtility.HtmlEncode (author.Name)}'required / >
                   
                              <label>Biography:</label>
-                             <textarea name='Biography' rows='4' required>
+                             <textarea name='Biography' minlength='2' maxlength ='1000' rows='4' required>
                  {System.Net.WebUtility.HtmlEncode(author.Biography)}
                              </textarea>
                  
@@ -217,6 +235,9 @@ namespace OnlineLibrary.Logic
                      </style>
                  </head>
                  <body>
+                      <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                      <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                      <button onclick=""window.location.href='/users'"">Go to USERS</button>
                      <h1 class='warning'>Delete Author</h1>
                      <p>Are you sure you want to delete <strong>{System.Net.WebUtility.HtmlEncode (   author.     Name)} </   strong>?</p>
                      <form method='post' action='/authors/delete/{id}'>
