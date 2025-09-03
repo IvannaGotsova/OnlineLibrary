@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using OnlineLibrary.Data;
 using OnlineLibrary.DBContext;
 using OnlineLibrary.Logic;
 using System;
-using  static OnlineLibrary.Logic.BookMapEndpointsExtensions;
 using static OnlineLibrary.Logic.AuthorMapEndpointsExtensions;
+using  static OnlineLibrary.Logic.BookMapEndpointsExtensions;
+using static OnlineLibrary.Logic.HomeMapEndpointsExtensions;
 using static OnlineLibrary.Logic.UserMapEndpointsExtensions;
 
 
@@ -16,7 +18,9 @@ builder.Services.AddDbContext<OnlineLibraryContext>(options =>
 
 var app = builder.Build();
 
-DatabaseSeed.DatabaseSeeder(app);
+app.UseStaticFiles();
+
+await DatabaseSeed.DatabaseSeeder(app);
 
 app.HomeMapEndpointsExt();
 app.AuthorMapEndpointsExt();
