@@ -29,7 +29,7 @@ namespace OnlineLibrary.Logic
                 html.Append("<button onclick =\"window.location.href='/books'\"> Go to BOOKS</button >");
                 html.Append("<button onclick=\"window.location.href='/users'\">Go to USERS</button>");
                 html.Append("<button onclick=\"window.location.href='/authors/create'\">CREATE AUTHOR</button>");
-                html.Append("<h1>Author</h1><table border='1'><tr><th>No.</th><th>Name</th><th>Biography</th><th>Books</th></tr>");
+                html.Append("<h1>Authors List</h1><table border='1'><tr><th>No.</th><th>Name</th><th>Biography</th><th>Books</th></tr>");
 
                 foreach (var author in authors)
                 {
@@ -37,7 +37,7 @@ namespace OnlineLibrary.Logic
                     html.Append($"<td>{author.AuthorId}</td>");
                     html.Append($"<td>{author.Name}</td>");
                     html.Append($"<td>{author.Biography}</td>");
-                    html.Append($"<td>{string.Join(", ", author.Books.Select(b => b.Title))}</td>");
+                    html.Append($"<td>{string.Join(", ", onlineLibraryContext.Books.Where(b => b.AuthorId == author.AuthorId).Select(b => $"<a href='/books/details/{b.BookId}'>{b.Title}</a>"))}</td>");
                     html.Append("<td>");
                     html.Append($"<button onclick=\"window.location.href='/authors/details/{author.AuthorId}/'\">Details</button>");
                     html.Append("</td>");
@@ -75,7 +75,9 @@ namespace OnlineLibrary.Logic
                 html.Append($"<h2>Number: {author.AuthorId}</h2>");
                 html.Append($"<h2>Name: {author.Name}</h2>");
                 html.Append($"<h3>Biography: {author.Biography}</h3>");
-                html.Append($"<h3>Books: {string.Join(", ", author.Books.Select(b => b.Title))}</h3>");
+                html.Append($"<td>{string.Join(", ", onlineLibraryContext.Books.Where(b => b.AuthorId == author.AuthorId).Select(b => $"<a href='/books/details/{b.BookId}'>{b.Title}</a>"))}</td>");
+                html.Append("<br/ >");
+                html.Append("<br/ >");
                 html.Append($"<button onclick=\"window.location.href='/authors/update/{author.AuthorId}/'\">Update</button>");
                 html.Append($"<button onclick=\"window.location.href='/authors/delete/{author.AuthorId}/'\">Delete</button>");
 
@@ -239,7 +241,7 @@ namespace OnlineLibrary.Logic
                       <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
                       <button onclick=""window.location.href='/users'"">Go to USERS</button>
                      <h1 class='warning'>Delete Author</h1>
-                     <p>Are you sure you want to delete <strong>{System.Net.WebUtility.HtmlEncode (   author.     Name)} </   strong>?</p>
+                     <p>Are you sure you want to delete <strong>{System.Net.WebUtility.HtmlEncode (author.Name)} </   strong>?</p>
                      <form method='post' action='/authors/delete/{id}'>
                          <button type='submit'>Yes, Delete</button>
                          <a href='/authors/details/{id}'><button type='button'>Cancel</button></a>
