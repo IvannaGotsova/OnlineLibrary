@@ -4,26 +4,34 @@ using Microsoft.EntityFrameworkCore;
 using OnlineLibrary.DBContext;
 using OnlineLibrary.Data;
 using OnlineLibrary.Entities;
+using Microsoft.IdentityModel.Tokens;
 
 namespace OnlineLibrary.Data
 {
     public static class DatabaseSeed
     {
-        public static void DatabaseSeeder(IApplicationBuilder app)
+        public static async Task DatabaseSeeder(IApplicationBuilder app)
         {
             using var scope = app.ApplicationServices.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<OnlineLibraryContext>();
 
-            
-            
             if (!context.Authors.Any())
             {
                 var pathAuthors = Path.Combine(AppContext.BaseDirectory, "Data", "authors.json");
                 var jsonAuthors = File.ReadAllText(pathAuthors);
                 var authors = JsonSerializer.Deserialize<List<Author>>(jsonAuthors);
 
+                using var transaction = await context.Database.BeginTransactionAsync();
+
+                await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Authors ON");
+
                 context.Authors.AddRange(authors);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
+
+                await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Authors OFF");
+
+                await transaction.CommitAsync();
+
             }
 
             if (!context.Users.Any())
@@ -32,8 +40,16 @@ namespace OnlineLibrary.Data
                 var jsonUsers = File.ReadAllText(pathUsers);
                 var users = JsonSerializer.Deserialize<List<User>>(jsonUsers);
 
+                using var transaction = await context.Database.BeginTransactionAsync();
+
+                await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Users ON");
+
                 context.Users.AddRange(users);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
+
+                await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Users OFF");
+
+                await transaction.CommitAsync();
             }
 
             if (!context.Books.Any())
@@ -42,8 +58,16 @@ namespace OnlineLibrary.Data
                 var jsonBooks = File.ReadAllText(pathBooks);
                 var books = JsonSerializer.Deserialize<List<Book>>(jsonBooks);
 
+                using var transaction = await context.Database.BeginTransactionAsync();
+
+                await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Books ON");
+
                 context.Books.AddRange(books);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
+
+                await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT Books OFF");
+
+                await transaction.CommitAsync();
             }
 
 
