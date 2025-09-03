@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 using OnlineLibrary.DBContext;
 using OnlineLibrary.Entities;
 using System.IO;
@@ -28,19 +30,24 @@ namespace OnlineLibrary.Logic
                 html.Append("<!DOCTYPE html><html><head><title>Books</title></head><body>");
                 html.Append("<button onclick=\"window.location.href='/authors'\">Go to AUTHORS</button>");
                 html.Append("<button onclick =\"window.location.href='/users'\"> Go to USERS</button >");
-                html.Append("<button onclick=\"window.location.href='/BOOKS/create'\">CREATE BOOK</button>");
+                html.Append("<button onclick=\"window.location.href='/books/create'\">CREATE BOOK</button>");
                 html.Append("<h1>Books List</h1><table border='1'><tr><th>No.</th><th>Title</th><th>Description</th><th>Author</th><th>Genre</th><th>Image</th><th>Release Date</th><th>Pages</th><th>Price</th></tr>");
 
                 foreach (var book in books)
                 {
+                    Author author = onlineLibraryContext.Authors.FirstOrDefault(a => a.AuthorId == book.AuthorId);
+                    Genre genre = onlineLibraryContext.Genres.FirstOrDefault(g => g.GenreId == book.GenreId);
+
                     html.Append("<tr>");
                     html.Append($"<td>{book.BookId}</td>");
                     html.Append($"<td>{book.Title}</td>");
                     html.Append($"<td>{book.Description}</td>");
-                    html.Append($"<td>{book.Author}</td>");
-                    html.Append($"<td>{book.Genre}</td>");
-                    html.Append($"<td>{book.ImageUrl}</td>");
-                    html.Append($"<td>{book.ReleaseDate}</td>");
+                    html.Append($"<td><a href='/authors/details/{author.AuthorId}'>{author.Name}</a></td>");
+                    html.Append($"<td>{genre.Name}</td>");
+                    html.Append("<td>");
+                    html.Append($"<img src={book.ImageUrl} width='100' height='100'>");
+                    html.Append("</td>");
+                    html.Append($"<td>{book.ReleaseDate.ToString("yyyy-MM-dd")}</td>");
                     html.Append($"<td>{book.Pages}</td>");
                     html.Append($"<td>{book.Price}</td>");
                     html.Append("<td>");
@@ -73,6 +80,9 @@ namespace OnlineLibrary.Logic
                     return Results.NotFound($"Book with ID {id} not found.");
                 }
 
+                Author author = onlineLibraryContext.Authors.FirstOrDefault(a => a.AuthorId == book.AuthorId);
+                Genre genre = onlineLibraryContext.Genres.FirstOrDefault(g => g.GenreId == book.GenreId);
+
                 var html = new System.Text.StringBuilder();
                 html.Append("<!DOCTYPE html><html><head><title>Books</title></head><body>");
                 html.Append("<button onclick =\"window.location.href='/books'\"> Go to BOOKS</button >");
@@ -81,11 +91,11 @@ namespace OnlineLibrary.Logic
                 html.Append("<h1>Book</h1>");
                 html.Append($"<h2>Number: {book.BookId}</h2>");
                 html.Append($"<h2>Title: {book.Title}</h2>");
+                html.Append($"<img src={book.ImageUrl} width='100' height='100'>");
                 html.Append($"<h3>Description: {book.Description}</h3>");
-                html.Append($"<h3>Author: {book.Author}</h3>");
-                html.Append($"<h3>Genre: {book.Genre}</h3>");
-                html.Append($"<h3>Image: {book.ImageUrl}</h3>");
-                html.Append($"<h3>Release Date: {book.ReleaseDate}</h3>");
+                html.Append($"<h3>Author: {author.Name}</h3>");
+                html.Append($"<h3>Genre: {genre.Name}</h3>");
+                html.Append($"<h3>Release Date: {book.ReleaseDate.ToString("yyyy-MM-dd")}</h3>");
                 html.Append($"<h3>Pages: {book.Pages}</h3>");
                 html.Append($"<h3>Price: {book.Price}</h3>");
                 html.Append($"<button onclick=\"window.location.href='/books/update/ {book.BookId}/'\">Update</button>");
@@ -122,11 +132,44 @@ namespace OnlineLibrary.Logic
                          <label>Description:</label>
                          <textarea name='Description' minlength='2' maxlength ='10000' rows='4' required></textarea>
 
-                         <label>Author:</label>
-                         <input type='number' name='Author' rows='4' required />
+                         <label for=""author"">Author:</label>
+                         <select id=""author"" name=""Author"" required>
+                           <option value="""">-- Select an Author --</option>
+                         </select>
+                         <script>
+                           fetch('/api/authors')
+                           .then(response => response.json())
+                           .then(authors => {
+                             const select = document.getElementById(""author"");
+                             authors.forEach(author => {
+                               const option = document.createElement(""option"");
+                               option.value = author.authorId;
+                               option.textContent = author.name;
+                               select.appendChild(option);
+                             });
+                           })
+                           .catch(error => console.error(""Error loading authors:"", error));
+                         </script>
 
-                         <label>Genre:</label>
-                         <input type='number' name='Genre' rows='4' required />
+
+                         <label for=""genre"">Genre:</label>
+                         <select id=""genre"" name=""Genre""required>
+                           <option value="""">-- Select a Genre --</option>
+                         </select>
+                         <script>
+                           fetch('/api/genres')
+                           .then(response => response.json())
+                           .then(genres => {
+                             const select = document.getElementById(""genre"");
+                             genres.forEach(genre => {
+                               const option = document.createElement(""option"");
+                               option.value = genre.genreId;
+                               option.textContent = genre.name;
+                               select.appendChild(option);
+                             });
+                           })
+                           .catch(error => console.error(""Error loading genres:"", error));
+                         </script>
 
                          <label>Image:</label>
                          <textarea name='Image'  minlength='5' maxlength ='100' rows='4' required></textarea>
@@ -225,11 +268,62 @@ namespace OnlineLibrary.Logic
                                 {System.Net.WebUtility.HtmlEncode(book.Description)}
                              </textarea>
 
-                             <label>Author:</label>
-                             <input type='number' name='Author' value='{System.Net.WebUtility.HtmlEncode(book.AuthorId.ToString())}'required / >
+                             <label for=""author"">Author:</label>
+                             <select id=""author"" name=""Author"" required>
+                               <option value="""">-- Select an Author --</option>
+                             </select>
 
-                             <label>Genre:</label>
-                             <input type='number' name='Genre' value='{System.Net.WebUtility.HtmlEncode(book.GenreId.ToString())}'required / >
+                             <script>
+                               const currentAuthorId = {book.AuthorId};
+
+                               fetch('/api/authors')
+                               .then(response => response.json())
+                               .then(authors => {{
+                                 const select = document.getElementById(""author"");
+                                 authors.forEach(author => {{
+                                   const option = document.createElement(""option"");
+                                   option.value = author.authorId;
+                                   option.textContent = author.name;
+
+                                if (author.authorId === currentAuthorId) 
+                                   {{
+                                     option.selected = true;
+                                   }}
+
+                                   select.appendChild(option);
+                                 }});
+                               }})
+                               .catch(error => console.error(""Error loading authors:"", error));
+                             </script>
+                            
+                            
+                             <label for=""genre"">Genre:</label>
+                             <select id=""genre"" name=""Genre"" required>
+                               <option value="""">-- Select a Genre --</option>
+                             </select>
+
+                             <script>
+                               const currentGenreId = {book.GenreId};
+
+                               fetch('/api/genres')
+                               .then(response => response.json())
+                               .then(genres => {{
+                                 const select = document.getElementById(""genre"");
+                                 genres.forEach(genre => {{
+                                   const option = document.createElement(""option"");
+                                   option.value = genre.genreId;
+                                   option.textContent = genre.name;
+
+                                if (genre.genreId === currentGenreId) 
+                                   {{
+                                     option.selected = true;
+                                   }}
+
+                                   select.appendChild(option);
+                                 }});
+                               }})
+                               .catch(error => console.error(""Error loading genres:"", error));
+                             </script>
 
                              <label>Release Date:</label>
                              <input type='date' name='Release Date' value='{System.Net.WebUtility.HtmlEncode(book.ReleaseDate.ToString("yyyy-MM-dd"))}'required / >
@@ -337,6 +431,24 @@ namespace OnlineLibrary.Logic
                 await onlineLibraryContext.SaveChangesAsync();
 
                 return Results.Redirect($"/books");
+            });
+
+            app.MapGet("/api/authors", (OnlineLibraryContext context) =>
+            {
+                var authors = context.Authors
+                    .Select(a => new { AuthorId = a.AuthorId, Name = a.Name })
+                    .ToList();
+
+                return Results.Ok(authors);
+            });
+
+            app.MapGet("/api/genres", (OnlineLibraryContext context) =>
+            {
+                var genres = context.Genres
+                    .Select(g => new { GenreId = g.GenreId, Name = g.Name })
+                    .ToList();
+
+                return Results.Ok(genres);
             });
 
             return app;
