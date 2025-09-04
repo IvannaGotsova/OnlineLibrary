@@ -40,6 +40,6 @@ namespace OnlineLibrary.Entities
         [Required]
         [StringLength(100, MinimumLength = 5)]
         public string ImageUrl { get; set; }
-        public IEnumerable<User> Users { get; set; } = new List<User>();
+        public ICollection<BookUser> UserBooks { get; set; } = new List<BookUser>();
     }
 }
