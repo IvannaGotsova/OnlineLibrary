@@ -16,7 +16,7 @@ namespace OnlineLibrary.DBContext
         public DbSet<Genre> Genres { get; set; } = null!;
         public DbSet<Author> Authors { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
-
+        public DbSet<BookUser> UserBooks { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -40,6 +40,20 @@ namespace OnlineLibrary.DBContext
                 new Genre { GenreId = 15, Name = "Thriller" },
                 new Genre { GenreId = 16, Name = "True Crime" }
             );
+
+            modelBuilder.Entity<BookUser>()
+                .HasKey(bu => new { bu.UserId, bu.BookId });
+
+            modelBuilder.Entity<BookUser>()
+                .HasOne(bu => bu.User)
+                .WithMany(u => u.UserBooks)
+                .HasForeignKey(bu => bu.UserId);
+
+            modelBuilder.Entity<BookUser>()
+                .HasOne(bu =>bu.Book)
+                .WithMany(b => b.UserBooks)
+                .HasForeignKey(bu => bu.BookId);
+
 
             base.OnModelCreating(modelBuilder);
         }
