@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using OnlineLibrary.DBContext;
 using OnlineLibrary.Entities;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -34,7 +34,8 @@ namespace OnlineLibrary.Logic
                     html.Append("<tr>");
                     html.Append($"<td>{user.UserId}</td>");
                     html.Append($"<td>{user.Name}</td>");
-                    html.Append($"<td>{string.Join(", ", user.Books.Select(b => b.Title))}</td>");
+                    html.Append($"<td>{string.Join(", ",
+     onlineLibraryContext.UserBooks.Where(ub => ub.UserId == user.UserId).Select(ub => ub.Book).Select(b => $"<a href='/books/details/{b.BookId}'>{b.Title}</a>"))}</td>");
                     html.Append("<td>");
                     html.Append($"<button onclick=\"window.location.href='/users/details/{user.UserId}/'\">Details</button>");
                     html.Append("</td>");
@@ -73,9 +74,12 @@ namespace OnlineLibrary.Logic
                 html.Append("<h1>User</h1>");
                 html.Append($"<h2>Number: {user.UserId}</h2>");
                 html.Append($"<h2>Name: {user.Name}</h2>");
-                html.Append($"<h3>Books: {string.Join(", ", user.Books.Select(b => b.Title))}</h3>");
+                html.Append($"<h3>Books: {string.Join(", ",
+     onlineLibraryContext.UserBooks.Where(ub => ub.UserId == user.UserId).Select(ub => ub.Book).Select(b => $"<a href='/books/details/{b.BookId}'>{b.Title}</a>"))}</h3>");
                 html.Append($"<button onclick=\"window.location.href='/users/update/{user.UserId}/'\">Update</button>");
                 html.Append($"<button onclick=\"window.location.href='/users/delete/{user.UserId}/'\">Delete</button>");
+                html.Append($"<button onclick=\"window.location.href='/users/read/{user.UserId}/'\">Read</button>");
+                html.Append($"<button onclick=\"window.location.href='/users/remove/{user.UserId}/'\">Remove</button>");
 
                 return Results.Content(html.ToString(), "text/html");
             });
@@ -249,6 +253,216 @@ namespace OnlineLibrary.Logic
                 }
 
                 onlineLibraryContext.Users.Remove(foundUser);
+                await onlineLibraryContext.SaveChangesAsync();
+
+                return Results.Redirect($"/users");
+            });
+
+            app.MapGet("/users/read/{id}", async (OnlineLibraryContext onlineLibraryContext, int id) =>
+            {
+                var user = await onlineLibraryContext.Users.FindAsync(id);
+
+                if (user is null)
+                {
+                    return Results.NotFound($"No user with ID {id}");
+                }
+
+                var html = $@"
+                     <!DOCTYPE html>
+                     <html>
+                     <head>
+                         <title>Read Book</title>
+                         <style>
+                             body {{ font-family: Arial; margin: 20px; }}
+                             label {{ display: block; margin-top: 10px; }}
+                             input, textarea {{ width: 100%; padding: 8px; margin-top: 5px; }}
+                             button {{ margin-top: 15px; padding: 10px 15px; }}
+                         </style>
+                     </head>
+                     <body>
+                         <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                         <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                         <button onclick=""window.location.href='/users'"">Go to USERS</button>
+                         <h1>Read a Book</h1>
+                         <form method='post' action='/users/read/{id}'>
+
+                             <label for=""book"">Book:</label>
+                             <select id=""book"" name=""BookId"" required>
+                               <option value="""">-- Select a Book --</option>
+                             </select>
+
+                             <script>
+                               fetch('/api/books/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf')
+                               .then(response => response.json())
+                               .then(books => {{
+                                 const select = document.getElementById(""book"");
+                                 books.forEach(book => {{
+                                   const option = document.createElement(""option"");
+                                   option.value = book.bookId;
+                                   option.textContent = book.name;
+
+                                   select.appendChild(option);
+                                 }});
+                               }})
+                               .catch(error => console.error(""Error loading Books:"", error));
+                             </script>
+
+                             <button type='submit'>Read Book</button>
+                         </form>
+                     </body>
+                     </html>";
+
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/users/read/{id}", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext, int id) =>
+            {
+                var users = onlineLibraryContext.Users;
+                var books = onlineLibraryContext.Books;
+
+                var formUser = await request.ReadFormAsync();
+                var bookTitle = formUser["Title"];
+                string bookId = null;
+
+                if (formUser.TryGetValue("BookId", out var bookIdValue))
+                {
+                    bookId = bookIdValue.ToString();
+                }
+                else
+                {
+                    Console.WriteLine("BookId not found in form data.");
+                }
+
+                var user = await onlineLibraryContext.Users.FirstOrDefaultAsync(u => u.UserId == id);
+                var book = await onlineLibraryContext.Books.FirstOrDefaultAsync(b => b.BookId == int.Parse(bookId));
+
+                if (user.UserId == -1)
+                {
+                    return Results.NotFound($"User with ID {id} not found.");
+                }
+
+                if (book.BookId == -1)
+                {
+                    return Results.NotFound($"Book with ID {id} not found.");
+                }
+
+                BookUser userBook = new BookUser();
+                userBook.UserId = user.UserId;
+                userBook.User = user;
+                userBook.BookId = book.BookId;
+                userBook.Book = book;
+
+                if (onlineLibraryContext.UserBooks.Contains(userBook)) 
+                {
+                    return Results.Ok($"<h3 style=\"font-size: 1.5rem; font-weight: bold; color: #d9534f;\">The selected book is already in the collection.</h3>");
+                }
+
+                user.UserBooks.Add(userBook);
+
+                await onlineLibraryContext.SaveChangesAsync();
+
+                return Results.Redirect($"/users/details/{id}");
+            });
+
+            app.MapGet("/users/remove/{id}", async (OnlineLibraryContext onlineLibraryContext, int id) =>
+            {
+                var user = await onlineLibraryContext.Users.FindAsync(id);
+
+                if (user is null)
+                {
+                    return Results.NotFound($"No user with ID {id}");
+                }
+
+                var html = $@"
+                     <!DOCTYPE html>
+                     <html>
+                     <head>
+                         <title>Remove Book</title>
+                         <style>
+                             body {{ font-family: Arial; margin: 20px; }}
+                             label {{ display: block; margin-top: 10px; }}
+                             input, textarea {{ width: 100%; padding: 8px; margin-top: 5px; }}
+                             button {{ margin-top: 15px; padding: 10px 15px; }}
+                         </style>
+                     </head>
+                     <body>
+                         <button onclick=""window.location.href='/books'"">Go to BOOKS</button>
+                         <button onclick=""window.location.href='/authors'"">Go to AUTHORS</button>
+                         <button onclick=""window.location.href='/users'"">Go to USERS</button>
+                         <h1>Remove a Book</h1>
+                         <form method='post' action='/users/remove/{id}'>
+
+                             <label for=""book"">Book:</label>
+                             <select id=""book"" name=""BookId"" required>
+                               <option value="""">-- Select a Book --</option>
+                             </select>
+
+                             <script>
+                               fetch('/api/userbooks/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf')
+                                 .then(response => response.json())
+                                 .then(userbook => {{
+                                   const select = document.getElementById(""book"");                    
+                                   userbook.forEach(ub => {{                                  
+                                     const book = ub.book || ub;
+                                     const user = ub.user || {{ userId: ub.userId }};                              
+                                     if (user.userId === {id}) {{
+                                       const option = document.createElement(""option"");
+                                       option.value = book.bookId;
+                                       option.textContent = book.title;
+                                       select.appendChild(option);
+                                     }}
+                                   }});
+                                 }})
+                                 .catch(error => console.error(""Error loading Books:"", error));
+                             </script>
+
+                             <button type='submit'>Remove Book</button>
+                         </form>
+                     </body>
+                     </html>";
+
+                return Results.Content(html, "text/html");
+            });
+
+            app.MapPost("/users/remove/{id}", async (HttpRequest request, OnlineLibraryContext onlineLibraryContext, int id) =>
+            {
+                var users = onlineLibraryContext.Users;
+                var books = onlineLibraryContext.Books;
+
+                var formUser = await request.ReadFormAsync();
+                var bookTitle = formUser["Title"];
+                string bookId = null;
+
+                if (formUser.TryGetValue("BookId", out var bookIdValue))
+                {
+                    bookId = bookIdValue.ToString();
+                }
+                else
+                {
+                    Console.WriteLine("BookId not found in form data.");
+                }
+
+                var user = await onlineLibraryContext.Users.FirstOrDefaultAsync(u => u.UserId == id);
+                var book = await onlineLibraryContext.Books.FirstOrDefaultAsync(b => b.BookId == int.Parse(bookId));
+
+                if (user.UserId == -1)
+                {
+                    return Results.NotFound($"User with ID {id} not found.");
+                }
+
+                if (book.BookId == -1)
+                {
+                    return Results.NotFound($"Book with ID {id} not found.");
+                }
+
+                BookUser userBook = new BookUser();
+                userBook.UserId = user.UserId;
+                userBook.User = user;
+                userBook.BookId = book.BookId;
+                userBook.Book = book;
+
+                onlineLibraryContext.UserBooks.Remove(userBook);
+
                 await onlineLibraryContext.SaveChangesAsync();
 
                 return Results.Redirect($"/users");
