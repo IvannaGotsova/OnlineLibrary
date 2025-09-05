@@ -22,21 +22,6 @@ namespace OnlineLibrary.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("BookUser", b =>
-                {
-                    b.Property<int>("BooksBookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UsersUserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("BooksBookId", "UsersUserId");
-
-                    b.HasIndex("UsersUserId");
-
-                    b.ToTable("BookUser");
-                });
-
             modelBuilder.Entity("OnlineLibrary.Entities.Author", b =>
                 {
                     b.Property<int>("AuthorId")
@@ -47,11 +32,13 @@ namespace OnlineLibrary.Migrations
 
                     b.Property<string>("Biography")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("AuthorId");
 
@@ -71,6 +58,7 @@ namespace OnlineLibrary.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasMaxLength(10000)
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("GenreId")
@@ -78,7 +66,8 @@ namespace OnlineLibrary.Migrations
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Pages")
                         .HasColumnType("int");
@@ -91,7 +80,8 @@ namespace OnlineLibrary.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("BookId");
 
@@ -100,6 +90,21 @@ namespace OnlineLibrary.Migrations
                     b.HasIndex("GenreId");
 
                     b.ToTable("Books");
+                });
+
+            modelBuilder.Entity("OnlineLibrary.Entities.BookUser", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "BookId");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("UserBooks");
                 });
 
             modelBuilder.Entity("OnlineLibrary.Entities.Genre", b =>
@@ -211,26 +216,12 @@ namespace OnlineLibrary.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(25)
+                        .HasColumnType("nvarchar(25)");
 
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("BookUser", b =>
-                {
-                    b.HasOne("OnlineLibrary.Entities.Book", null)
-                        .WithMany()
-                        .HasForeignKey("BooksBookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("OnlineLibrary.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("OnlineLibrary.Entities.Book", b =>
@@ -252,14 +243,43 @@ namespace OnlineLibrary.Migrations
                     b.Navigation("Genre");
                 });
 
+            modelBuilder.Entity("OnlineLibrary.Entities.BookUser", b =>
+                {
+                    b.HasOne("OnlineLibrary.Entities.Book", "Book")
+                        .WithMany("UserBooks")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineLibrary.Entities.User", "User")
+                        .WithMany("UserBooks")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OnlineLibrary.Entities.Author", b =>
                 {
                     b.Navigation("Books");
                 });
 
+            modelBuilder.Entity("OnlineLibrary.Entities.Book", b =>
+                {
+                    b.Navigation("UserBooks");
+                });
+
             modelBuilder.Entity("OnlineLibrary.Entities.Genre", b =>
                 {
                     b.Navigation("Books");
+                });
+
+            modelBuilder.Entity("OnlineLibrary.Entities.User", b =>
+                {
+                    b.Navigation("UserBooks");
                 });
 #pragma warning restore 612, 618
         }
