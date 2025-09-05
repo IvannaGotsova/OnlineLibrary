@@ -14,6 +14,6 @@ namespace OnlineLibrary.Entities
         [Required]
         [StringLength(25, MinimumLength = 2)]
         public string Name { get; set; }
-        public IEnumerable<Book> Books { get; set; } = new List<Book>();
+        public ICollection<BookUser> UserBooks { get; set; } = new List<BookUser>();
     }
 }
