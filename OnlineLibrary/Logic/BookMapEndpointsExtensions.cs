@@ -101,6 +101,7 @@ namespace OnlineLibrary.Logic
                 html.Append($"<button onclick=\"window.location.href='/books/update/ {book.BookId}/'\">Update</button>");
                 html.Append($"<button onclick=\"window.location.href='/books/delete/ {book.BookId}/'\">Delete</button>");
 
+
                 return Results.Content(html.ToString(), "text/html");
             });
 
@@ -137,7 +138,7 @@ namespace OnlineLibrary.Logic
                            <option value="""">-- Select an Author --</option>
                          </select>
                          <script>
-                           fetch('/api/authors')
+                           fetch('/api/authors/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf')
                            .then(response => response.json())
                            .then(authors => {
                              const select = document.getElementById(""author"");
@@ -157,7 +158,7 @@ namespace OnlineLibrary.Logic
                            <option value="""">-- Select a Genre --</option>
                          </select>
                          <script>
-                           fetch('/api/genres')
+                           fetch('/api/genres/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf')
                            .then(response => response.json())
                            .then(genres => {
                              const select = document.getElementById(""genre"");
@@ -276,7 +277,7 @@ namespace OnlineLibrary.Logic
                              <script>
                                const currentAuthorId = {book.AuthorId};
 
-                               fetch('/api/authors')
+                               fetch('/api/authors/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf')
                                .then(response => response.json())
                                .then(authors => {{
                                  const select = document.getElementById(""author"");
@@ -305,7 +306,7 @@ namespace OnlineLibrary.Logic
                              <script>
                                const currentGenreId = {book.GenreId};
 
-                               fetch('/api/genres')
+                               fetch('/api/genres/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf')
                                .then(response => response.json())
                                .then(genres => {{
                                  const select = document.getElementById(""genre"");
@@ -433,7 +434,7 @@ namespace OnlineLibrary.Logic
                 return Results.Redirect($"/books");
             });
 
-            app.MapGet("/api/authors", (OnlineLibraryContext context) =>
+            app.MapGet("/api/authors/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf", (OnlineLibraryContext context) =>
             {
                 var authors = context.Authors
                     .Select(a => new { AuthorId = a.AuthorId, Name = a.Name })
@@ -442,13 +443,31 @@ namespace OnlineLibrary.Logic
                 return Results.Ok(authors);
             });
 
-            app.MapGet("/api/genres", (OnlineLibraryContext context) =>
+            app.MapGet("/api/genres/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf", (OnlineLibraryContext context) =>
             {
                 var genres = context.Genres
                     .Select(g => new { GenreId = g.GenreId, Name = g.Name })
                     .ToList();
 
                 return Results.Ok(genres);
+            });
+
+            app.MapGet("/api/books/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf", (OnlineLibraryContext context) =>
+            {
+                var books = context.Books
+                    .Select(b => new { BookId = b.BookId, Name = b.Title,  })
+                    .ToList();
+
+                return Results.Ok(books);
+            });
+
+            app.MapGet("/api/userbooks/asdfghjklpoiuytrewqaskaflgodiglsfksldfspeoitwpotvcxmmgfdhgdnchf", (OnlineLibraryContext context) =>
+            {
+                var userBooks = context.UserBooks
+                    .Select(ub => new { BookId = ub.BookId, Book = ub.Book, UserId = ub.UserId , User = ub.User})
+                    .ToList();
+
+                return Results.Ok(userBooks);
             });
 
             return app;
